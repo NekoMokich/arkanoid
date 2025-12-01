@@ -67,6 +67,7 @@ let game = {
         this.collideBlocks();
         this.collidePlatform();
         this.ball.collideWorldBounds();
+        this.platform.collideWorldBounds();
         this.platform.move();
         this.ball.move();
         
@@ -100,9 +101,10 @@ let game = {
     },
     renderBlocks() {
         for (let block of this.blocks) {
-            if (block.active)
+            if (block.active) {
                 this.ctx.drawImage(this.sprites.block, block.x, block.y);
-        }
+            }
+        } 
     },
     start: function() {
         this.init();
@@ -150,7 +152,7 @@ game.ball = {
     },
         collideWorldBounds(){
         let x = this.x + this.dx;
-        let y = this.y + this.dx;
+        let y = this.y + this.dy;
 
         let ballLeft = x;
         let ballRight = ballLeft + this.width;
@@ -167,7 +169,7 @@ game.ball = {
             this.dx = this.velocity;
         } else if (ballRight > worldRight) {
             this.x = worldRight - this.width;
-            this.dx = this.velocity;
+            this.dx = -this.velocity;
         } else if (ballTop < worldTop) {
             this.y = 0;
             this.dy = this.velocity;
@@ -180,9 +182,14 @@ game.ball = {
         block.active = false;
     },
     bumpPlatform(platform) {
-        this.dy *= -1;
+        if (platform.dx){
+            this.x += platform.dx;
+        }
+        if (this.dy > 0) {
+            this.dy = -this.velocity;;
         let touchX = this.x + this.width / 2;
         this.dx = this.velocity * platform.getTouchOffset(touchX);
+        }
     }
 };
 
@@ -216,9 +223,9 @@ game.platform = {
     move() {
         if (this.dx) {
             this.x += this.dx;
-        }
         if (this.ball) {
             this.ball.x += this.dx;
+            }
         }
     },
     getTouchOffset(x) {
@@ -226,6 +233,17 @@ game.platform = {
         let offset = this.width - diff;
         let result = 2 * offset / this.width;
         return result - 1;
+    },
+    collideWorldBounds(){
+        let x = this.x + this.dx;
+        let platformLeft = x;
+        let platformRight = platformLeft + this.width;
+        let worldLeft = 0;
+        let worldRight = game.width;
+    
+    if (platformLeft < worldLeft || platformRight > worldRight){
+        this.dx = 0;
+        }
     }
 };
 
