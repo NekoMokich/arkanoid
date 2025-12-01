@@ -5,10 +5,12 @@ const KEYS = {
 };
 
 let game = {
+    running: true,
     ctx: null,
     platform: null,
     ball: null,
     blocks: [],
+    score: 0,
     rows: 4,
     cols: 8,
     width: 640,
@@ -57,8 +59,8 @@ let game = {
                     active: true,
                     width: 60,
                     height: 20,
-                    x: 64 + col * 65,
-                    y: 24 + row * 35
+                    x: 64 * col + 65,
+                    y: 24 * row + 35
                 });
             }
         }
@@ -70,13 +72,19 @@ let game = {
         this.platform.collideWorldBounds();
         this.platform.move();
         this.ball.move();
-        
-       
+    },
+    addScore() {
+        ++this.score;
+
+        if (this.score >= this.blocks.length) {
+            this.end("You Winner");
+        }
     },
     collideBlocks() {
         for (let block of this.blocks) {
             if (block.active && this.ball.collide(block)) {
                 this.ball.bumpBlock(block);
+                this.addScore();
             }
         }
     },
@@ -86,11 +94,13 @@ let game = {
         }
     },
     run() {
+        if (this.running){
         window.requestAnimationFrame(() => {
             this.update();
             this.render();
             this.run();
-        });
+            });
+        }
     },
     render() {
         this.ctx.clearRect(0, 0, this.width, this.height);
@@ -112,6 +122,11 @@ let game = {
             this.create();
             this.run();
         });
+    },
+    end(message){
+        this.running = false;
+        alert(message);
+        window.location.reload();
     },
     random(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
@@ -174,7 +189,7 @@ game.ball = {
             this.y = 0;
             this.dy = this.velocity;
         } else if (ballBottom > worldBottom) {
-            console.log('game over');
+            alert("Game Over");
         }
     },
     bumpBlock(block) {
@@ -182,11 +197,11 @@ game.ball = {
         block.active = false;
     },
     bumpPlatform(platform) {
-        if (platform.dx){
+        if (platform.dx) {
             this.x += platform.dx;
         }
         if (this.dy > 0) {
-            this.dy = -this.velocity;;
+            this.dy = -this.velocity;
         let touchX = this.x + this.width / 2;
         this.dx = this.velocity * platform.getTouchOffset(touchX);
         }
@@ -213,9 +228,6 @@ game.platform = {
         } else if (direction === KEYS.RIGHT) {
             this.dx = this.velocity;
         }
-        if (this.ball) {
-            this.ball.dx = this.dx;
-        }
     },
     stop() {
         this.dx = 0;
@@ -241,7 +253,7 @@ game.platform = {
         let worldLeft = 0;
         let worldRight = game.width;
     
-    if (platformLeft < worldLeft || platformRight > worldRight){
+    if (platformLeft < worldLeft || platformRight > worldRight) {
         this.dx = 0;
         }
     }
