@@ -22,11 +22,16 @@ let game = {
         block: null
     },
     sounds: {
-        bump:null
+        bump: null,
     },
-    init: function() {
+    init() {
         this.ctx = document.getElementById("mycanvas").getContext("2d");
+        this.setTextFont();
         this.setEvents();
+    },
+    setTextFont() {
+        this.ctx.font = "20px Arial";
+        this.ctx.fillStyle = "#FFFFFF";
     },
     setEvents() {
         window.addEventListener("keydown", e => {
@@ -36,6 +41,7 @@ let game = {
                 this.platform.start(e.keyCode);
             }
         });
+
         window.addEventListener("keyup", e => {
             this.platform.stop();
         });
@@ -43,7 +49,7 @@ let game = {
     preload(callback) {
         let loaded = 0;
         let required = Object.keys(this.sprites).length;
-        required += Object.keys(this.sounds).length
+        required += Object.keys(this.sounds).length;
 
         let onResourceLoad = () => {
             ++loaded;
@@ -62,8 +68,8 @@ let game = {
             this.sprites[key].addEventListener("load", onResourceLoad);
         }
     },
-    preloadAudio(onResourceLoad){
-        for (let key in this.sounds){
+    preloadAudio(onResourceLoad) {
+        for (let key in this.sounds) {
             this.sounds[key] = new Audio("sounds/" + key + ".mp3");
             this.sounds[key].addEventListener("canplaythrough", onResourceLoad, {once: true});
         }
@@ -91,7 +97,6 @@ let game = {
     },
     addScore() {
         ++this.score;
-
         if (this.score >= this.blocks.length) {
             this.end("You Winner");
         }
@@ -101,20 +106,22 @@ let game = {
             if (block.active && this.ball.collide(block)) {
                 this.ball.bumpBlock(block);
                 this.addScore();
+                this.sounds.bump.play();
             }
         }
     },
     collidePlatform() {
         if (this.ball.collide(this.platform)) {
             this.ball.bumpPlatform(this.platform);
+            this.sounds.bump.play();
         }
     },
     run() {
-        if (this.running){
-        window.requestAnimationFrame(() => {
-            this.update();
-            this.render();
-            this.run();
+        if (this.running) {
+            window.requestAnimationFrame(() => {
+                this.update();
+                this.render();
+                this.run();
             });
         }
     },
@@ -124,22 +131,23 @@ let game = {
         this.ctx.drawImage(this.sprites.ball, 0, 0, this.ball.width, this.ball.height, this.ball.x, this.ball.y, this.ball.width, this.ball.height);
         this.ctx.drawImage(this.sprites.platform, this.platform.x, this.platform.y);
         this.renderBlocks();
+        this.ctx.fillText("Score: " + this.score, 15, 20);
     },
     renderBlocks() {
         for (let block of this.blocks) {
             if (block.active) {
                 this.ctx.drawImage(this.sprites.block, block.x, block.y);
             }
-        } 
+        }
     },
-    start: function() {
+    start: function () {
         this.init();
         this.preload(() => {
             this.create();
             this.run();
         });
     },
-    end(message){
+    end(message) {
         this.running = false;
         alert(message);
         window.location.reload();
@@ -179,9 +187,10 @@ game.ball = {
             y < element.y + element.height) {
             return true;
         }
+
         return false;
     },
-        collideWorldBounds(){
+    collideWorldBounds() {
         let x = this.x + this.dx;
         let y = this.y + this.dy;
 
@@ -208,7 +217,7 @@ game.ball = {
             this.dy = this.velocity;
             game.sounds.bump.play();
         } else if (ballBottom > worldBottom) {
-            alert("Game Over");
+            game.end("Game Over");
         }
     },
     bumpBlock(block) {
@@ -219,10 +228,11 @@ game.ball = {
         if (platform.dx) {
             this.x += platform.dx;
         }
+
         if (this.dy > 0) {
             this.dy = -this.velocity;
-        let touchX = this.x + this.width / 2;
-        this.dx = this.velocity * platform.getTouchOffset(touchX);
+            let touchX = this.x + this.width / 2;
+            this.dx = this.velocity * platform.getTouchOffset(touchX);
         }
     }
 };
@@ -254,8 +264,8 @@ game.platform = {
     move() {
         if (this.dx) {
             this.x += this.dx;
-        if (this.ball) {
-            this.ball.x += this.dx;
+            if (this.ball) {
+                this.ball.x += this.dx;
             }
         }
     },
@@ -265,15 +275,15 @@ game.platform = {
         let result = 2 * offset / this.width;
         return result - 1;
     },
-    collideWorldBounds(){
+    collideWorldBounds() {
         let x = this.x + this.dx;
         let platformLeft = x;
         let platformRight = platformLeft + this.width;
         let worldLeft = 0;
         let worldRight = game.width;
-    
-    if (platformLeft < worldLeft || platformRight > worldRight) {
-        this.dx = 0;
+
+        if (platformLeft < worldLeft || platformRight > worldRight) {
+            this.dx = 0;
         }
     }
 };
